@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional, Dict, Any
 
 from src.core.database import get_db
 from src.schemas.auth import Token, UserLogin
@@ -10,6 +12,33 @@ from src.schemas.common import BaseResponse
 from src.models.admin import Admin
 from src.models.user import User
 from src.core.security import create_access_token, verify_password, get_password_hash
+
+# Pydantic schema for registration request
+class RegisterRequest(BaseModel):
+    """
+    Registration request schema for user or admin.
+    """
+    type: str = Field("user", description="Account type: 'user' or 'admin'")
+    username: str = Field(..., min_length=3, max_length=100)
+    email: EmailStr = Field(...)
+    full_name: str = Field(..., min_length=1, max_length=200)
+    password: str = Field(..., min_length=8)
+    # Admin fields
+    is_superuser: Optional[bool] = False
+    is_admin: Optional[bool] = True
+    permissions: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    notes: Optional[str] = None
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "type": "user",
+                "username": "testuser",
+                "email": "testuser@example.com",
+                "full_name": "Test User",
+                "password": "ValidPass1"
+            }
+        }
 
 # PUBLIC_INTERFACE
 router = APIRouter(
@@ -69,11 +98,12 @@ def login(
     },
 )
 def register(
-    payload: dict,
+    payload: RegisterRequest,
     db: Session = Depends(get_db)
 ):
     """
     Register a new user or admin.
+
     Provide fields:
         - type: "admin" or "user"
         - username
@@ -83,13 +113,12 @@ def register(
         [for admin: is_superuser, is_admin, permissions, notes (optional)]
     Returns success or error.
     """
-    user_type = payload.get("type", "user")
-    username = payload.get("username")
-    email = payload.get("email")
-    full_name = payload.get("full_name")
-    password = payload.get("password")
-    if not username or not email or not full_name or not password:
-        raise HTTPException(status_code=400, detail="Missing required fields.")
+    user_type = payload.type
+    username = payload.username
+    email = payload.email
+    full_name = payload.full_name
+    password = payload.password
+
     # Duplicate check: username/email across both admin/user
     admin_exists = db.query(Admin).filter(
         (Admin.username == username) | (Admin.email == email)
@@ -107,10 +136,10 @@ def register(
             username=username,
             email=email,
             full_name=full_name,
-            is_superuser=payload.get("is_superuser", False),
-            is_admin=payload.get("is_admin", True),
-            permissions=payload.get("permissions", {}),
-            notes=payload.get("notes"),
+            is_superuser=payload.is_superuser,
+            is_admin=payload.is_admin,
+            permissions=payload.permissions,
+            notes=payload.notes,
             password=password,
         )
         admin = Admin(
@@ -126,8 +155,7 @@ def register(
         db.add(admin)
     elif user_type == "user":
         # Validate user fields using UserLogin for password constraints
-        # User model requires username/email/full_name/hashed_password
-        validated = UserLogin(
+        _ = UserLogin(
             username=email,
             password=password,
         )
