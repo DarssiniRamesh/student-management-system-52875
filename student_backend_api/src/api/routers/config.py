@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from ...core.database import get_db
-from ...core.auth import get_current_active_user, get_current_superuser
+from ...core.auth import get_current_active_admin, get_current_superuser
 from ...models.admin import Admin
 from ...services.config_service import ConfigService
 from ...schemas.config import (
@@ -41,7 +41,7 @@ def get_configurations(
     include_system: bool = Query(True, description="Include system configurations"),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(50, ge=1, le=100, description="Maximum number of records to return"),
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -92,7 +92,7 @@ def get_configurations(
 )
 def get_configuration(
     key: str,
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -124,7 +124,7 @@ def get_configuration(
 )
 def create_configuration(
     config_data: ConfigCreate,
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -152,7 +152,7 @@ def create_configuration(
 def update_configuration(
     key: str,
     config_data: ConfigUpdate,
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -189,7 +189,7 @@ def update_configuration(
 )
 def delete_configuration(
     key: str,
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -225,7 +225,7 @@ def get_feature_toggles(
     enabled_only: bool = Query(False, description="Only return enabled toggles"),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(50, ge=1, le=100, description="Maximum number of records to return"),
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -267,7 +267,7 @@ def get_feature_toggles(
 )
 def get_feature_toggle(
     name: str,
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -296,7 +296,7 @@ def get_feature_toggle(
 )
 def create_feature_toggle(
     toggle_data: FeatureToggleCreate,
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -325,7 +325,7 @@ def create_feature_toggle(
 def update_feature_toggle(
     name: str,
     toggle_data: FeatureToggleUpdate,
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -360,7 +360,7 @@ def update_feature_toggle(
 )
 def delete_feature_toggle(
     name: str,
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -391,7 +391,7 @@ def delete_feature_toggle(
 def get_runtime_config(
     environment: str = Query("all", description="Environment to get config for"),
     include_sensitive: bool = Query(False, description="Include sensitive configurations (superuser only)"),
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -428,7 +428,7 @@ def check_feature_enabled(
     feature_name: str,
     environment: str = Query("all", description="Environment context"),
     user_id: Optional[str] = Query(None, description="User ID to check for"),
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
@@ -469,7 +469,7 @@ def check_feature_enabled(
     description="Get all unique configuration categories."
 )
 def get_config_categories(
-    current_user: Admin = Depends(get_current_active_user),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
