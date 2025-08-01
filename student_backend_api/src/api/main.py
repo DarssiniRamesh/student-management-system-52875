@@ -2,17 +2,22 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routers.config import router as config_router
+from .routers.analytics import router as analytics_router
 from ..core.config import settings
 from ..core.database import create_tables
 
 app = FastAPI(
     title="Student Management Backend API",
-    description="Backend API for student management system with admin configuration capabilities",
+    description="Backend API for student management system with admin configuration capabilities. Includes analytics and dashboard metrics for admin/operator consumption.",
     version=settings.app_version,
     openapi_tags=[
         {
             "name": "Configuration Management",
             "description": "Dynamic configuration and feature toggle management endpoints"
+        },
+        {
+            "name": "Admin Analytics & Dashboard",
+            "description": "System metrics and dashboard analytics for operator/admin consumption"
         }
     ]
 )
@@ -27,6 +32,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(config_router, prefix="/api/v1")
+app.include_router(analytics_router)
 
 @app.on_event("startup")
 async def startup_event():
