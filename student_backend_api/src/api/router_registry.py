@@ -9,7 +9,7 @@ from typing import List, Tuple, Optional
 from fastapi import APIRouter
 
 RouterEntry = Tuple[APIRouter, Optional[str], Optional[str]]  # (router, prefix, tags)
-
+from fastapi import FastAPI
 
 class RouterRegistry:
     """
@@ -44,3 +44,25 @@ class RouterRegistry:
 # from .routers.config import router as config_router
 # RouterRegistry.register(config_router, prefix="/api/v1")
 
+from .routers.config import router as config_router
+from .routers.analytics import analytics_router
+
+# Register routers here for plug-and-play extensibility
+RouterRegistry.register(config_router, prefix="/api/v1/config", tags="Configuration Management")
+RouterRegistry.register(analytics_router, prefix="/admin/analytics", tags="Admin Analytics & Dashboard")
+
+# PUBLIC_INTERFACE
+def register_all_routers(app: FastAPI):
+    """
+    Register all routers in the RouterRegistry with the FastAPI app.
+
+    Args:
+        app (FastAPI): FastAPI application instance.
+    """
+    for router, prefix, tags in RouterRegistry.get_routes():
+        include_kwargs = {}
+        if prefix:
+            include_kwargs["prefix"] = prefix
+        if tags:
+            include_kwargs["tags"] = [tags] if isinstance(tags, str) else tags
+        app.include_router(router, **include_kwargs)

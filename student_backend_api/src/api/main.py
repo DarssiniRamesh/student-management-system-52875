@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from src.api.routers import auth
 from src.api.router_registry import register_all_routers
 
 app = FastAPI(
@@ -8,6 +7,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Register all routers, including authentication
+# PUBLIC_INTERFACE
+# Register all routers for the FastAPI backend.
 register_all_routers(app)
-app.include_router(auth.router)
