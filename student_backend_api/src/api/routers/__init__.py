@@ -1,7 +1,4 @@
 """
 API routers package.
+Routers are now registered dynamically via src/api/router_registry.py for plug-and-play extensibility.
 """
-from .config import router as config_router
-from .analytics import router as analytics_router
-
-__all__ = ["config_router", "analytics_router"]
