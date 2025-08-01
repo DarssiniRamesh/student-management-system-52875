@@ -1,7 +1,7 @@
 """
 Authentication and authorization related Pydantic schemas for request/response validation.
 """
-from typing import Optional, Dict, Any
+from typing import Optional
 from pydantic import BaseModel, Field, EmailStr, Extra
 
 # PUBLIC_INTERFACE
@@ -69,26 +69,28 @@ class UserLogin(BaseModel):
 # PUBLIC_INTERFACE
 class RegisterRequest(BaseModel):
     """
-    Registration request schema for user or admin.
-    Only these fields are accepted: type, username, email, full_name, password, is_superuser, is_admin, permissions, notes.
+    Registration request schema strictly for new users.
+
+    Only these fields are accepted: username, email, full_name, password.
     Any unknown field will be rejected with a 422 error.
+
+    Example:
+        {
+            "username": "testuser",
+            "email": "testuser@example.com",
+            "full_name": "Test User",
+            "password": "ValidPass1"
+        }
     """
-    type: str = Field("user", description="Account type: 'user' or 'admin'")
     username: str = Field(..., min_length=3, max_length=100, description="Username for the new account")
     email: EmailStr = Field(..., description="Email address for the new account")
     full_name: str = Field(..., min_length=1, max_length=200, description="Full name of the new account holder")
     password: str = Field(..., min_length=8, description="Password for the account (minimum 8 chars)")
-    # Admin fields (optional for users)
-    is_superuser: Optional[bool] = False
-    is_admin: Optional[bool] = True
-    permissions: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    notes: Optional[str] = None
 
     class Config:
         extra = Extra.forbid
         schema_extra = {
             "example": {
-                "type": "user",
                 "username": "testuser",
                 "email": "testuser@example.com",
                 "full_name": "Test User",
