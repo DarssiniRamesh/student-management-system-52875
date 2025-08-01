@@ -2,43 +2,15 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, Dict, Any
+
 
 from src.core.database import get_db
-from src.schemas.auth import Token, UserLogin
+from src.schemas.auth import Token, UserLogin, RegisterRequest
 from src.schemas.admin import AdminCreate
 from src.schemas.common import BaseResponse
 from src.models.admin import Admin
 from src.models.user import User
 from src.core.security import create_access_token, verify_password, get_password_hash
-
-# Pydantic schema for registration request
-class RegisterRequest(BaseModel):
-    """
-    Registration request schema for user or admin.
-    """
-    type: str = Field("user", description="Account type: 'user' or 'admin'")
-    username: str = Field(..., min_length=3, max_length=100)
-    email: EmailStr = Field(...)
-    full_name: str = Field(..., min_length=1, max_length=200)
-    password: str = Field(..., min_length=8)
-    # Admin fields
-    is_superuser: Optional[bool] = False
-    is_admin: Optional[bool] = True
-    permissions: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    notes: Optional[str] = None
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "type": "user",
-                "username": "testuser",
-                "email": "testuser@example.com",
-                "full_name": "Test User",
-                "password": "ValidPass1"
-            }
-        }
 
 # PUBLIC_INTERFACE
 router = APIRouter(
@@ -84,10 +56,8 @@ def login(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-# PUBLIC_INTERFACE
-from fastapi.responses import JSONResponse
-from pydantic import ValidationError
 
+# PUBLIC_INTERFACE
 @router.post(
     "/register",
     summary="Register new user or admin",
@@ -98,13 +68,15 @@ from pydantic import ValidationError
     responses={
         201: {"description": "Registration successful"},
         400: {"description": "User or admin with given email/username already exists"},
+        422: {"description": "Validation Error for extra or missing fields"}
     },
 )
 def register(
-    payload: dict,
+    request: RegisterRequest,
     db: Session = Depends(get_db)
 ):
     """
+    PUBLIC_INTERFACE
     Register a new user or admin.
 
     Provide fields:
@@ -114,24 +86,13 @@ def register(
         - full_name
         - password
         [for admin: is_superuser, is_admin, permissions, notes (optional)]
-    Returns success or error.
+    Returns success or error; extra root properties are disallowed and return a 422.
     """
-    # Attempt Pydantic validation, raise 400 for any validation error to match test expectations
-    try:
-        payload = RegisterRequest(**payload)
-    except ValidationError as ve:
-        return JSONResponse(
-            status_code=400,
-            content={
-                "detail": ve.errors()
-            }
-        )
-
-    user_type = payload.type
-    username = payload.username
-    email = payload.email
-    full_name = payload.full_name
-    password = payload.password
+    user_type = request.type
+    username = request.username
+    email = request.email
+    full_name = request.full_name
+    password = request.password
 
     # Duplicate check: username/email across both admin/user
     admin_exists = db.query(Admin).filter(
@@ -150,10 +111,10 @@ def register(
             username=username,
             email=email,
             full_name=full_name,
-            is_superuser=payload.is_superuser,
-            is_admin=payload.is_admin,
-            permissions=payload.permissions,
-            notes=payload.notes,
+            is_superuser=request.is_superuser,
+            is_admin=request.is_admin,
+            permissions=request.permissions,
+            notes=request.notes,
             password=password,
         )
         admin = Admin(

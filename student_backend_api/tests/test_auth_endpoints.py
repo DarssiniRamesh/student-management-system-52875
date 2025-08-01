@@ -45,7 +45,7 @@ def test_register_and_login_flow():
 
     # Registration: missing fields
     resp3 = client.post("/api/v1/auth/register", json={"username": "partial"})
-    assert resp3.status_code == 400
+    assert resp3.status_code == 422
 
     # Registration: password too short (should fail pydantic validation)
     short_pw = dict(new_user)
@@ -53,31 +53,39 @@ def test_register_and_login_flow():
     short_pw["email"] = "testuser2@example.com"
     short_pw["password"] = "short"
     resp4 = client.post("/api/v1/auth/register", json=short_pw)
-    assert resp4.status_code in (400, 422)
+    assert resp4.status_code == 422
+
+    # Registration: extra/invalid field (should fail with 422)
+    with_extra = dict(new_user)
+    with_extra["unexpected_field"] = "boom"
+    resp5 = client.post("/api/v1/auth/register", json=with_extra)
+    assert resp5.status_code == 422
+    err = resp5.json()
+    assert "extra fields not permitted" in str(err["detail"])
 
     # Login: success (with email)
-    resp5 = client.post("/api/v1/auth/login", data={
+    resp6 = client.post("/api/v1/auth/login", data={
         "username": new_user["email"],
         "password": new_user["password"]
     })
-    assert resp5.status_code == 200
-    login_data = resp5.json()
+    assert resp6.status_code == 200
+    login_data = resp6.json()
     assert "access_token" in login_data
     assert login_data["token_type"] == "bearer"
 
-    # Login: success (with wrong password)
-    resp6 = client.post("/api/v1/auth/login", data={
+    # Login: wrong password (should fail)
+    resp7 = client.post("/api/v1/auth/login", data={
         "username": new_user["email"],
         "password": "wrongpassword"
     })
-    assert resp6.status_code == 401
+    assert resp7.status_code == 401
 
     # Login: unknown user
-    resp7 = client.post("/api/v1/auth/login", data={
+    resp8 = client.post("/api/v1/auth/login", data={
         "username": "notfound@example.com",
         "password": "nopass123"
     })
-    assert resp7.status_code == 401
+    assert resp8.status_code == 401
 
 def test_admin_registration_and_login():
     admin_payload = {
