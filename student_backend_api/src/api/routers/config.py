@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from ...core.database import get_db
-from ...core.auth import get_current_active_admin, get_current_superuser
+from ...core.auth import get_current_active_admin
 from ...models.admin import Admin
 from ...services.config_service import ConfigService
 from ...schemas.config import (
@@ -488,17 +488,23 @@ def get_config_categories(
 )
 def bulk_update_configs(
     bulk_data: ConfigBulkUpdate,
-    current_user: Admin = Depends(get_current_superuser),
+    current_user: Admin = Depends(get_current_active_admin),
     config_service: ConfigService = Depends(get_config_service)
 ):
     """
     Bulk update multiple configurations.
-    
+
     Requires superuser privileges. Updates existing configurations
     and creates new ones as needed.
-    
+
     Returns summary of the bulk update operation.
     """
+    if not getattr(current_user, "is_superuser", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only superusers can perform bulk update."
+        )
+
     results = config_service.bulk_update_configs(
         bulk_data.configurations,
         current_user.id
