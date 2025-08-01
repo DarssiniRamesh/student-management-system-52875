@@ -85,6 +85,9 @@ def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 # PUBLIC_INTERFACE
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
+
 @router.post(
     "/register",
     summary="Register new user or admin",
@@ -98,7 +101,7 @@ def login(
     },
 )
 def register(
-    payload: RegisterRequest,
+    payload: dict,
     db: Session = Depends(get_db)
 ):
     """
@@ -113,6 +116,17 @@ def register(
         [for admin: is_superuser, is_admin, permissions, notes (optional)]
     Returns success or error.
     """
+    # Attempt Pydantic validation, raise 400 for any validation error to match test expectations
+    try:
+        payload = RegisterRequest(**payload)
+    except ValidationError as ve:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "detail": ve.errors()
+            }
+        )
+
     user_type = payload.type
     username = payload.username
     email = payload.email

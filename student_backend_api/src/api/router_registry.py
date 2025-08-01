@@ -52,7 +52,8 @@ from .routers.health import health_router
 # Register routers here for plug-and-play extensibility
 RouterRegistry.register(config_router, prefix="/api/v1/config", tags="Configuration Management")
 RouterRegistry.register(analytics_router, prefix="/admin/analytics", tags="Admin Analytics & Dashboard")
-RouterRegistry.register(auth_router, prefix="/api/v1/auth", tags="Authentication")
+# DO NOT specify prefix again for auth_router; it's already included in the router object to avoid double prefixing.
+RouterRegistry.register(auth_router, tags="Authentication")
 RouterRegistry.register(health_router, prefix="", tags="Health Check")
 
 # PUBLIC_INTERFACE
