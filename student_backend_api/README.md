@@ -22,6 +22,17 @@ This directory contains the FastAPI backend for the Student Management System.
 
 4. **Access OpenAPI docs** at [http://localhost:3001/docs](http://localhost:3001/docs)
 
+5. **Verify Installation**:
+    - To check for missing dependencies, run:
+    ```bash
+    pip check
+    ```
+    - To ensure all required files are present for startup:
+    ```bash
+    ls -l .env .env.example requirements.txt start_server.sh src/api/main.py
+    ```
+    - If any of these files are missing or `pip check` reports issues, resolve them before running the backend.
+
 ---
 
 ## Troubleshooting
@@ -29,6 +40,11 @@ This directory contains the FastAPI backend for the Student Management System.
 - **Port 3001 already in use:** Stop other processes using the port or pick another port for the backend.
 - **Missing `.env` or missing/invalid `SECRET_KEY`:** Ensure `.env` exists with all required variables. Critical for security and correct app launch.
 - **Module or import errors:** Ensure you run `uvicorn` or scripts from within the `student_backend_api` directory.
+- **Missing `fastapi` or dependencies:** Ensure you've run:
+    ```
+    pip install -r requirements.txt
+    ```
+    If you see `ModuleNotFoundError`, check requirements and reinstall all dependencies.
 - **Database issues:** Check `DATABASE_URL` in `.env`. Defaults to local SQLite for development.
 
 ---
