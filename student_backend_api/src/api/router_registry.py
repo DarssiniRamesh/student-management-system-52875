@@ -46,10 +46,12 @@ class RouterRegistry:
 
 from .routers.config import router as config_router
 from .routers.analytics import analytics_router
+from .routers.auth import router as auth_router
 
 # Register routers here for plug-and-play extensibility
 RouterRegistry.register(config_router, prefix="/api/v1/config", tags="Configuration Management")
 RouterRegistry.register(analytics_router, prefix="/admin/analytics", tags="Admin Analytics & Dashboard")
+RouterRegistry.register(auth_router, prefix="/api/v1/auth", tags="Authentication")
 
 # PUBLIC_INTERFACE
 def register_all_routers(app: FastAPI):
