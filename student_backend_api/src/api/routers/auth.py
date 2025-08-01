@@ -68,7 +68,7 @@ def login(
     responses={
         201: {"description": "Registration successful"},
         400: {"description": "User or admin with given email/username already exists"},
-        422: {"description": "Validation Error for extra or missing fields"}
+        422: {"description": "Validation Error for extra or missing fields (handled by FastAPI/Pydantic, never returns 500 for unexpected fields)"}
     },
 )
 def register(
@@ -78,6 +78,9 @@ def register(
     """
     PUBLIC_INTERFACE
     Register a new user or admin.
+
+    FastAPI will always reject any request with extra/unknown fields not defined in RegisterRequest schema by returning a 422 response with standard validation error details (never a 500 error).
+    This guarantees strict schema compliance for registration payloads.
 
     Provide fields:
         - type: "admin" or "user"
