@@ -11,6 +11,12 @@ This directory contains the FastAPI backend for the Student Management System.
 
 2. **Copy `.env.example` to `.env`** and fill in the required environment variables for your local or deployment environment.
 
+> Make sure your `.env` file includes a line for the database:
+> ```
+> DATABASE_URL=sqlite:///./dev.db
+> ```
+> For production deployments, set `DATABASE_URL` to your actual database connection string (e.g., for PostgreSQL: `postgresql://user:password@host:port/dbname`). If not set and `ENV` is `production`, startup will error.
+
 3. **Start the FastAPI server**:
     ```
     bash start_server.sh

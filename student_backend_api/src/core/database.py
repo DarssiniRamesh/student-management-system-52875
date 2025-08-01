@@ -8,10 +8,14 @@ from typing import Generator
 from .config import settings
 from ..models.base import Base
 
-# Create database engine
+# Ensure settings.database_url exists and is string
+db_url = getattr(settings, "database_url", None)
+if not db_url:
+    raise RuntimeError("DATABASE_URL is not set or settings misconfigured. Please check your .env file.")
+
 engine = create_engine(
-    settings.database_url,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.database_url else {}
+    db_url,
+    connect_args={"check_same_thread": False} if db_url.startswith("sqlite") else {}
 )
 
 # Create SessionLocal class
